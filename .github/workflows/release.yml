@@ -56,7 +56,7 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DIVIN_CODE: ${{ secrets.DIVIN_CODE }}
+          DIVIN_CODE_G: ${{ secrets.DIVIN_CODE_G }}
         with:
           tagName: v$__VERSION__
           releaseName: 'music-player v$__VERSION__'
