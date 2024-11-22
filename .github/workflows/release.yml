@@ -1,8 +1,11 @@
 name: Release
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   release:
@@ -11,7 +14,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [macos-latest, ubuntu-22.04, windows-latest]
+        include:
+          - platform: macos-latest
+            args: '--target aarch64-apple-darwin'
+          - platform: macos-latest
+            args: '--target x86_64-apple-darwin'
+          - platform: ubuntu-22.04
+            args: ''
+          - platform: windows-latest
+            args: ''
     runs-on: ${{ matrix.platform }}
 
     steps:
@@ -23,12 +34,13 @@ jobs:
           
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
         
       - name: Install dependencies (ubuntu only)
         if: matrix.platform == 'ubuntu-22.04'
         run: |
           sudo apt-get update
-          sudo apt-get install -y webkit2gtk-4.1
           sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf libayatana-appindicator3-dev
 
       - name: Install frontend dependencies
@@ -41,13 +53,14 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         
       - name: Build Tauri
-        uses: tauri-apps/tauri-action@v0-beta
+        uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DIVIN: ${{ secrets.DIVIN }}
+          DIVIN_CODE: ${{ secrets.DIVIN_CODE }}
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: 'music-player ${{ github.ref_name }}'
+          tagName: v$__VERSION__
+          releaseName: 'music-player v$__VERSION__'
           releaseBody: 'See the assets to download and install this version of music-player.'
-          releaseDraft: true
+          releaseDraft: false
           prerelease: false
+          args: ${{ matrix.args }}
